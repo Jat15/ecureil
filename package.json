@@ -1,0 +1,10 @@
+{
+  "name": "ecureuil-volant",
+  "version": "5.0.0",
+  "description": "Écureuil volant — forêt fractale procédurale sur petite planète",
+  "type": "module",
+  "scripts": {
+    "serve": "npx serve .",
+    "start": "npx serve ."
+  }
+}

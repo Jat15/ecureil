@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Écureuil Volant — Forêt Vivante</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="overlay">
+  <h1>Écureuil Volant</h1>
+  <p class="sub">ramasse les graines, fais pousser la forêt</p>
+  <div class="keys">
+    <b>Clavier</b> — ZQSD/WASD bouger · souris caméra · molette zoom<br>
+    <b>Espace</b> — sauter · maintenir en l'air pour <b>planer</b><br>
+    <b>🌰 Graines</b> — les toucher en vol (combo si enchaînées)<br>
+    <b>🌱 Souches</b> — maintenir <b>E</b> pour planter (1.2s)<br>
+    <b>F5</b> — sauvegarde manuelle<br>
+    <b>Manette / Tactile</b> — supportés
+  </div>
+  <p class="go">cliquez / touchez pour commencer</p>
+</div>
+
+<div id="planetBarWrap">
+  <div id="planetBarLabel">Forêt de la planète</div>
+  <div id="planetBar"><div id="planetBarFill"></div></div>
+</div>
+
+<div id="hud"></div>
+<div id="combo"></div>
+<div id="flash"></div>
+<div id="toast"></div>
+<div id="plantPrompt">
+  <div>Planter · <span class="key">E</span> maintenir</div>
+  <div class="bar"><div class="barFill" id="plantBarFill"></div></div>
+</div>
+<div id="enduranceWrap">
+  <div id="enduranceLabel">⚡ Endurance</div>
+  <div id="enduranceBar"><div id="enduranceFill"></div></div>
+</div>
+<div id="nestCounter">🥚 0/5</div>
+<div id="grabPrompt">S'accrocher · <span class="key">E</span></div>
+<div id="herbier">
+  <div class="title">Herbier</div>
+  <div class="grid" id="herbierGrid"></div>
+</div>
+
+<div id="touch-controls">
+  <div id="joy-base"><div id="joy-knob"></div></div>
+  <div id="jump-btn">SAUT</div>
+  <div id="plant-btn">PLANTE</div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

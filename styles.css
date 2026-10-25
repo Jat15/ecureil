@@ -1,0 +1,204 @@
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; height: 100%; overflow: hidden;
+  background: #060a12; font-family: system-ui, -apple-system, sans-serif;
+  touch-action: none; -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+canvas { display: block; }
+#overlay {
+  position: fixed; inset: 0; z-index: 20;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: #d8ecff; cursor: pointer; text-align: center; padding: 24px;
+  background: radial-gradient(circle at 50% 42%, #16273f 0%, #070a12 70%);
+  transition: opacity .5s ease;
+}
+#overlay.hidden { opacity: 0; pointer-events: none; }
+#overlay h1 {
+  font-size: clamp(1.6rem, 5vw, 2.6rem); margin: 0 0 .5rem;
+  letter-spacing: .22em; text-transform: uppercase; font-weight: 300;
+  background: linear-gradient(180deg, #eaf6ff, #7fb4e8);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+#overlay .sub { opacity: .55; font-size: .9rem; letter-spacing: .12em; margin: 0 0 2rem; }
+#overlay .keys {
+  font-size: .78rem; line-height: 2.05; opacity: .78; letter-spacing: .04em;
+  border: 1px solid rgba(120,180,255,.18); border-radius: 10px;
+  padding: 14px 26px; background: rgba(120,180,255,.04); max-width: 92vw;
+}
+#overlay .keys b { color: #9fd2ff; font-weight: 600; }
+#overlay .go { margin-top: 2rem; font-size: .8rem; letter-spacing: .3em; text-transform: uppercase; opacity: .45; animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:.25} 50%{opacity:.7} }
+
+#hud {
+  position: fixed; left: 18px; bottom: 16px; z-index: 10;
+  color: #8fbde6; font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
+  pointer-events: none; opacity: .7; text-shadow: 0 1px 4px #000; line-height: 1.6;
+}
+#hud .seed { color: #ffcc44; font-weight: 600; }
+#hud .charged { color: #ff88ff; font-weight: 600; }
+
+#planetBarWrap {
+  position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
+  width: min(340px, 60vw); z-index: 10; pointer-events: none;
+  text-align: center;
+}
+#planetBarLabel {
+  color: #8fbde6; font-size: 10px; letter-spacing: .22em;
+  text-transform: uppercase; opacity: .75; margin-bottom: 6px;
+  text-shadow: 0 1px 3px #000;
+}
+#planetBar {
+  height: 8px; background: rgba(10,25,40,0.8); border-radius: 4px;
+  border: 1px solid rgba(120,180,255,0.25); overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+#planetBarFill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, #3a7bd5, #6fffaa, #ffcc44);
+  border-radius: 4px; transition: width 0.6s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 0 12px rgba(111,255,170,0.5);
+}
+
+#combo {
+  position: fixed; top: 90px; left: 50%; transform: translateX(-50%);
+  font-size: 42px; font-weight: 900; letter-spacing: .08em;
+  color: #ffcc44; text-shadow: 0 0 24px rgba(255,204,68,0.9), 0 4px 12px rgba(0,0,0,0.8);
+  opacity: 0; transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none; z-index: 18;
+}
+#combo.show { opacity: 1; transform: translateX(-50%) scale(1); }
+#combo.pulse { transform: translateX(-50%) scale(1.3); }
+
+#flash {
+  position: fixed; inset: 0; pointer-events: none; z-index: 17;
+  background: white; opacity: 0; transition: opacity 0.25s;
+}
+
+#plantPrompt {
+  position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%);
+  background: rgba(20,40,60,0.92); color: #eaf6ff;
+  padding: 14px 28px; border-radius: 14px; font-size: 14px;
+  letter-spacing: 0.1em; opacity: 0; transition: opacity 0.25s;
+  pointer-events: none; border: 1px solid rgba(111,255,170,0.4);
+  text-align: center;
+}
+#plantPrompt.visible { opacity: 1; }
+#plantPrompt .key {
+  display: inline-block; background: rgba(111,255,170,0.2); color: #6fffaa;
+  padding: 2px 10px; border-radius: 6px; font-weight: 700; margin: 0 4px;
+}
+#plantPrompt .bar {
+  width: 200px; height: 6px; background: rgba(255,255,255,0.15);
+  border-radius: 3px; margin: 8px auto 0; overflow: hidden;
+}
+#plantPrompt .barFill {
+  height: 100%; width: 0%; background: #6fffaa; border-radius: 3px;
+  transition: width 0.05s linear;
+}
+
+#herbier {
+  position: fixed; right: 18px; bottom: 16px; z-index: 10;
+  background: rgba(0,0,0,0.5); border-radius: 10px;
+  padding: 10px 12px; border: 1px solid rgba(120,180,255,0.2);
+  max-width: 220px;
+}
+#herbier .title {
+  font-size: 10px; letter-spacing: .2em; color: #8fbde6;
+  text-transform: uppercase; opacity: .75; margin-bottom: 8px;
+}
+#herbier .grid { display: flex; flex-wrap: wrap; gap: 6px; }
+#herbier .cell {
+  width: 22px; height: 22px; border-radius: 5px;
+  background: rgba(120,180,255,0.1); border: 1px solid rgba(120,180,255,0.25);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; transition: all 0.3s;
+}
+#herbier .cell.filled {
+  background: rgba(111,255,170,0.25); border-color: rgba(111,255,170,0.6);
+  box-shadow: 0 0 8px rgba(111,255,170,0.4);
+}
+
+#toast {
+  position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+  background: rgba(20,40,60,0.92); color: #eaf6ff;
+  padding: 12px 24px; border-radius: 20px; font-size: 13px;
+  letter-spacing: 0.08em; opacity: 0; transition: opacity 0.3s;
+  pointer-events: none; border: 1px solid rgba(120,180,255,0.3); z-index: 19;
+}
+#toast.visible { opacity: 1; }
+#toast.gold { border-color: rgba(255,204,68,0.7); background: rgba(60,40,10,0.92); color: #ffcc44; }
+
+#touch-controls { position: fixed; inset: 0; z-index: 15; pointer-events: none; display: none; }
+#joy-base {
+  position: fixed; width: 128px; height: 128px; border-radius: 50%;
+  border: 2px solid rgba(120,180,255,0.35); background: rgba(120,180,255,0.08);
+  transform: translate(-50%, -50%); display: none; pointer-events: none;
+}
+#joy-knob {
+  position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; border-radius: 50%;
+  background: rgba(120,180,255,0.42); border: 2px solid rgba(180,220,255,0.85);
+  transform: translate(-50%, -50%); box-shadow: 0 0 16px rgba(120,180,255,0.4);
+}
+#jump-btn, #plant-btn {
+  position: fixed; width: 82px; height: 82px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.14em;
+  transition: transform 0.08s ease, background 0.08s ease;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5); pointer-events: none;
+}
+#jump-btn {
+  bottom: 32px; right: 32px;
+  background: rgba(120,180,255,0.18); border: 2px solid rgba(120,180,255,0.55);
+  color: #a8d4ff;
+}
+#plant-btn {
+  bottom: 128px; right: 32px;
+  background: rgba(111,255,170,0.15); border: 2px solid rgba(111,255,170,0.5);
+  color: #6fffaa;
+}
+#jump-btn.pressed { background: rgba(120,180,255,0.55); transform: scale(0.94); }
+#plant-btn.pressed { background: rgba(111,255,170,0.55); transform: scale(0.94); }
+
+
+/* v6 — Endurance + Nids + Grab */
+#enduranceWrap {
+  position: fixed; right: 18px; bottom: 210px; z-index: 10;
+  width: 140px; pointer-events: none;
+}
+#enduranceLabel {
+  color: #8fbde6; font-size: 10px; letter-spacing: .2em;
+  text-transform: uppercase; opacity: .75; margin-bottom: 4px;
+  text-shadow: 0 1px 3px #000;
+}
+#enduranceBar {
+  height: 10px; background: rgba(10,25,40,0.8); border-radius: 5px;
+  border: 1px solid rgba(120,180,255,0.25); overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+#enduranceFill {
+  height: 100%; width: 100%;
+  background: linear-gradient(90deg, #3a7bd5, #6fffaa);
+  border-radius: 5px;
+  transition: width 0.1s linear, background 0.3s;
+}
+#nestCounter {
+  position: fixed; right: 18px; bottom: 100px; z-index: 10;
+  color: #ffcc44; font-size: 13px; letter-spacing: .15em;
+  text-transform: uppercase; opacity: 0.85;
+  text-shadow: 0 1px 4px #000;
+  pointer-events: none;
+}
+#grabPrompt {
+  position: fixed; bottom: 180px; left: 50%; transform: translateX(-50%);
+  background: rgba(20,40,60,0.92); color: #eaf6ff;
+  padding: 10px 20px; border-radius: 10px; font-size: 13px;
+  letter-spacing: 0.1em; opacity: 0; transition: opacity 0.2s;
+  pointer-events: none; border: 1px solid rgba(255,204,68,0.5);
+  z-index: 16;
+}
+#grabPrompt.visible { opacity: 1; }
+#grabPrompt .key {
+  display: inline-block; background: rgba(255,204,68,0.25); color: #ffcc44;
+  padding: 2px 10px; border-radius: 6px; font-weight: 700; margin: 0 4px;
+}
