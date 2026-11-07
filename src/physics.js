@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { terrainRadius, terrainNormal } from './planet.js';
 import { trees } from './trees.js';
 import { squirrel } from './squirrel.js';
+import { pushOutCapsule } from './physics/capsule.js';
 import { endurance } from './endurance.js';
 
 export const GRAVITY = 26, WALK_SPEED = 6.6, JUMP_SPEED = 11.5,
@@ -190,6 +191,56 @@ function updateClimb(dt, input) {
   orientModel(radial.clone(), fwd, dt, 14);
 }
 
+// ============================================================
+// v6 P0.4a — Push-out branches (collisions capsule)
+// ============================================================
+// Parcourt les arbres proches et repousse la position du joueur
+// hors des segments (cylindres) en intersection.
+//
+// N'est PAS appelé pendant la grimpe (state.climbing = true),
+// ni pour l'arbre grimpé.
+const COLLISION_RANGE = 15;   // m — culling des arbres
+const COLLISION_MARGIN = 0.02; // m — marge pour éviter les micro-push
+
+function resolveTreeCollisions() {
+  // Pas de collision pendant la grimpe
+  if (state.climbing) return;
+
+  const playerR = SQUIRREL_R;
+  const posSq = state.pos.lengthSq();
+  let bestPush = null;
+
+  for (const tree of trees) {
+    if (tree.growing) continue;
+    // Culling rapide
+    if (tree.base.distanceToSquared(state.pos) > COLLISION_RANGE * COLLISION_RANGE) continue;
+
+    for (let i = 0; i < tree.segments.length; i++) {
+      const seg = tree.segments[i];
+      const result = pushOutCapsule(
+        state.pos, playerR + COLLISION_MARGIN,
+        seg.from, seg.to, seg.radius
+      );
+      if (result) {
+        // Garder le push le plus fort pour ne pas cumuler
+        if (!bestPush || result.push.lengthSq() > bestPush.push.lengthSq()) {
+          bestPush = result;
+        }
+      }
+    }
+  }
+
+  if (bestPush) {
+    // Appliquer le push-out
+    state.pos.add(bestPush.push);
+    // Annuler la composante normale de la vitesse (glissement)
+    const vn = state.vel.dot(bestPush.normal);
+    if (vn < 0) {
+      state.vel.addScaledVector(bestPush.normal, -vn);
+    }
+  }
+}
+
 export function updateSquirrel(dt, input, camera) {
   const up = state.up;
   const camDir = new THREE.Vector3();
@@ -236,6 +287,7 @@ export function updateSquirrel(dt, input, camera) {
     state.vel.lerp(targetVel, 1 - Math.exp(-16 * dt));
     state.vel.addScaledVector(up, -state.vel.dot(up));
     state.pos.addScaledVector(state.vel, dt);
+    resolveTreeCollisions();   // P0.4a
     const nd = state.pos.clone().normalize();
     const gr = terrainRadius(nd) + SQUIRREL_R;
     if (state.pos.length() > gr + 0.5) { state.grounded = false; state.up.copy(nd); }
@@ -282,6 +334,7 @@ export function updateSquirrel(dt, input, camera) {
       state.vel.addScaledVector(upA, -GRAVITY * dt);
     }
     state.pos.addScaledVector(state.vel, dt);
+    resolveTreeCollisions();   // P0.4a
 
     // Collision douce en vol
     if (!state.grounded) {
