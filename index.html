@@ -14,7 +14,7 @@
   <div class="keys">
     <b>Clavier</b> — ZQSD/WASD bouger · souris caméra · molette zoom<br>
     <b>Espace</b> — sauter · maintenir en l'air pour <b>planer</b><br>
-    <b>🌰 Graines</b> — les toucher en vol (combo si enchaînées)<br>
+    <b>🌰 Graines</b> — les toucher en vol<br>
     <b>🌱 Souches</b> — maintenir <b>E</b> pour planter (1.2s)<br>
     <b>F5</b> — sauvegarde manuelle<br>
     <b>Manette / Tactile</b> — supportés
@@ -35,11 +35,6 @@
   <div>Planter · <span class="key">E</span> maintenir</div>
   <div class="bar"><div class="barFill" id="plantBarFill"></div></div>
 </div>
-<div id="enduranceWrap">
-  <div id="enduranceLabel">⚡ Endurance</div>
-  <div id="enduranceBar"><div id="enduranceFill"></div></div>
-</div>
-<div id="nestCounter">🥚 0/5</div>
 <div id="grabPrompt">S'accrocher · <span class="key">E</span></div>
 <div id="herbier">
   <div class="title">Herbier</div>
@@ -63,5 +58,7 @@
 }
 </script>
 <script type="module" src="src/main.js"></script>
+<!-- P1 — Scanner spectral (bordure DOM) -->
+<div id="spectralOverlay"></div>
 </body>
 </html>

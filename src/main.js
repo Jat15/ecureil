@@ -6,19 +6,19 @@ import { buildInitialForestV2, trees, uTime } from './trees.js';
 import { buildSquirrelMesh, squirrel, legs, membraneL, membraneR, tailPivot } from './squirrel.js';
 import { ParticlePool, updateBirds, spawnBird } from './effects.js';
 import { state, updateSquirrel, GRAVITY, WALK_SPEED, SQUIRREL_R, getGlideStreak } from './physics.js';
-import { initInput, updateInputFrame, input, isTouchDevice, setGameStarted,
-  consumeYawPitch, getCamPitch, setCamPitch, getCamDist } from './input.js';
+import { initInput, updateInputFrame, input, isTouchDevice, setGameStarted, consumeYawPitch, getCamPitch, setCamPitch, getCamDist } from './input.js';
 import { ui, initUI, updateHUD, tickToast, showToast, updatePlanetBar } from './ui.js';
 import { terrainRadius } from './planet.js';
 import { initRng as initRngAgain } from './rng.js';
 import { initGameplay, wireCollectableHooks, makeSnapshot, autoSave, buildSave } from './gameState.js';
 import { loadGame, saveGame, clearSave } from './save.js';
-import { endurance } from './endurance.js';
-import { setupNests, updateNests, getNestProgress, nests } from './nests.js';
 import { createSquirrelXray } from './xray.js';
-import { updateEnduranceUI, updateNestCounter, toggleGrabPrompt } from './ui.js';
-import { updateSeeds, updateStumps, updateGrowingTrees, setClockRef,
-  seedCount, plantedCount, totalStumps, setCollectableHooks } from './collectables.js';
+import { toggleGrabPrompt } from './ui.js';
+import { updateScanMode, scanState } from './scanner/scanMode.js';
+import { initScanReveal, applyScanVisuals } from './scanner/scanReveal.js';
+import { updateScanUI } from './scanner/scanUI.js';
+import { maybeShowScanTutorial } from './tutorial.js';
+import { updateSeeds, updateStumps, updateGrowingTrees, setClockRef, seedCount, plantedCount, totalStumps, setCollectableHooks } from './collectables.js';
 
 // ---------- SCENE ----------
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -113,18 +113,12 @@ buildPlanet(scene);
 buildInitialForestV2(scene);
 buildSquirrelMesh(scene);
 createSquirrelXray(squirrel);
+initScanReveal(scene);
 
 // Restaurer ou setup initial
 const savedToRestore = saved && saved.seed === worldSeed ? saved : null;
 // Note : initGameplay utilise rng APRÈS initialisation, donc setup graines/souches reproductible
 initGameplay(scene, particles, savedToRestore);
-setupNests(scene);
-for (const n of nests) {
-  n.onVisit = () => {
-    showToast('🥚 Nid découvert !', true);
-    endurance.gain(30);
-  };
-}
 
 // Hook auto-save dans UI
 ui.onManualSave = () => {
@@ -143,6 +137,33 @@ scene.add(shadow);
 
 // ---------- CAMERA ----------
 const _camTarget = new THREE.Vector3();
+
+// P0.4b — caméra anti-clipping
+const _camRaycaster = new THREE.Raycaster();
+const _camDir = new THREE.Vector3();
+const _camHitTmp = new THREE.Vector3();
+let _camTreeList = null;
+let _camTreeListCount = -1;
+function _collectTreeMeshes() {
+  const list = [];
+  const seen = new Set();
+  for (const t of trees) {
+    if (!t) continue;
+    const root = t.group || t.mesh || t.root || t.object3d || t.object || (t.isObject3D ? t : null);
+    if (!root || !root.isObject3D) continue;
+    root.traverse(o => {
+      if (o.isMesh && !seen.has(o)) { seen.add(o); list.push(o); }
+    });
+  }
+  return list;
+}
+function _getTreeMeshes() {
+  if (!_camTreeList || _camTreeListCount !== trees.length) {
+    _camTreeList = _collectTreeMeshes();
+    _camTreeListCount = trees.length;
+  }
+  return _camTreeList;
+}
 function updateCamera(dt) {
   const up = state.up.clone();
   _camTarget.copy(state.pos).addScaledVector(up, 0.75);
@@ -160,7 +181,53 @@ function updateCamera(dt) {
   const horiz = Math.cos(getCamPitch()) * getCamDist();
   const vert  = Math.sin(getCamPitch()) * getCamDist();
   const desired = _camTarget.clone().addScaledVector(tang, horiz).addScaledVector(up, vert);
-  camera.position.lerp(desired, 1 - Math.exp(-13 * dt));
+
+  // P0.4b — anti-clipping : raycast pivot -> caméra désirée
+  let finalPos = desired;
+  _camDir.copy(desired).sub(_camTarget);
+  const rayLen = _camDir.length();
+  if (rayLen > 1e-4) {
+    _camDir.divideScalar(rayLen);
+    let nearest = rayLen;
+
+    // Arbres (raycast meshes)
+    _camRaycaster.set(_camTarget, _camDir);
+    _camRaycaster.far = rayLen;
+    const hits = _camRaycaster.intersectObjects(_getTreeMeshes(), false);
+    if (hits.length > 0 && hits[0].distance < nearest) nearest = hits[0].distance;
+
+    // Terrain (sphère bruitée, 8 échantillons)
+    const SAFETY = 0.35;
+    const STEPS = 8;
+    for (let i = 1; i <= STEPS; i++) {
+      const t = (i / STEPS) * rayLen;
+      _camHitTmp.copy(_camTarget).addScaledVector(_camDir, t);
+      const r = _camHitTmp.length();
+      if (r < 1e-4) continue;
+      const dirN = _camHitTmp.clone().divideScalar(r);
+      const groundR = terrainRadius(dirN);
+      if (r < groundR + SAFETY) {
+        if (t < nearest) nearest = t;
+        break;
+      }
+    }
+
+    if (nearest < rayLen - 1e-4) {
+      const pulled = Math.max(0.8, nearest - 0.3);
+      finalPos = _camTarget.clone().addScaledVector(_camDir, pulled);
+    }
+  }
+
+  camera.position.lerp(finalPos, 1 - Math.exp(-13 * dt));
+
+  // Plancher sol : ne jamais passer sous le terrain
+  const cp = camera.position.length();
+  if (cp > 1e-4) {
+    const cd = camera.position.clone().divideScalar(cp);
+    const gr = terrainRadius(cd) + 0.35;
+    if (cp < gr) camera.position.copy(cd).multiplyScalar(gr);
+  }
+
   camera.up.copy(up);
   camera.lookAt(_camTarget);
 }
@@ -255,14 +322,16 @@ function animate() {
   updateStumps(dt, input);
   updateGrowingTrees(dt);
   updateBirds(dt, clockTime);
-  updateNests(dt, clockTime);
   particles.update(dt, state.up.clone().negate());
   updateCamera(dt);
   updateVisuals(dt);
 
-  updateEnduranceUI(endurance.current, endurance.max);
-  const np = getNestProgress();
-  updateNestCounter(np.visited, np.total);
+  // P1 — scanner spectral
+  updateScanMode(dt, clockTime);
+  applyScanVisuals(scanState);
+  updateScanUI(scanState);
+  maybeShowScanTutorial(scanState, showToast);
+
   toggleGrabPrompt(!!state.nearGrab);
 
   // Auto-save toutes les 5s (uniquement si jeu démarré)

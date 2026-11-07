@@ -3,7 +3,6 @@ import { terrainRadius, terrainNormal } from './planet.js';
 import { trees } from './trees.js';
 import { squirrel } from './squirrel.js';
 import { pushOutCapsule } from './physics/capsule.js';
-import { endurance } from './endurance.js';
 
 export const GRAVITY = 26, WALK_SPEED = 6.6, JUMP_SPEED = 11.5,
   GLIDE_SPEED = 11.5, GLIDE_FALL = 2.3, SQUIRREL_R = 0.36, CLIMB_SPEED = 3.4;
@@ -13,7 +12,8 @@ export const state = {
   up: new THREE.Vector3(0, 0, 1), forward: new THREE.Vector3(1, 0, 0),
   grounded: false, gliding: false, climbing: false,
   climbTree: null, climbSeg: -1, climbT: 0, climbAngle: 0,
-  nearGrab: false,
+  nearGrab: false
+,
   spirit: {
     mode: 'squirrel',
     controlledAnimalId: null,
@@ -28,7 +28,7 @@ export function resetGlideStreak() { glideStreak = 0; }
 export function getGlideStreak() { return glideStreak; }
 
 export function initState() {
-  endurance.reset();
+
   const d = new THREE.Vector3(0.35, 0.42, 0.84).normalize();
   state.up.copy(d);
   state.pos.copy(d).multiplyScalar(terrainRadius(d) + SQUIRREL_R);
@@ -97,7 +97,7 @@ function pickChildSegment(tree, parentSeg, worldPos) {
   }
   return best;
 }
-function findClimbableTree() {
+function findClimbableTree(maxExtra = 0.65) {
   let best = null;
   for (const tree of trees) {
     if (tree.growing) continue;
@@ -105,7 +105,7 @@ function findClimbableTree() {
     for (let i = 0; i < tree.segments.length; i++) {
       const seg = tree.segments[i];
       const { dist, param } = pointSegmentDistance(state.pos, seg.from, seg.to);
-      if (dist < seg.radius + 0.65 && (!best || dist < best.dist)) {
+      if (dist < seg.radius + maxExtra && (!best || dist < best.dist)) {
         best = { tree, segIdx: i, param, dist, seg };
       }
     }
@@ -147,7 +147,7 @@ export function orientModel(modelUp, modelForward, dt, speed) {
 function updateClimb(dt, input) {
   const tree = state.climbTree;
   let seg = tree.segments[state.climbSeg];
-  endurance.spend(endurance.drainClimb * dt);
+
   const prevPos = state.pos.clone();
   const segLen0 = new THREE.Vector3().subVectors(seg.to, seg.from).length();
   state.climbT += input.moveZ * (CLIMB_SPEED / segLen0) * dt;
@@ -242,6 +242,7 @@ function resolveTreeCollisions() {
 }
 
 export function updateSquirrel(dt, input, camera) {
+  state.nearGrab = false;
   const up = state.up;
   const camDir = new THREE.Vector3();
   camera.getWorldDirection(camDir);
@@ -268,7 +269,7 @@ export function updateSquirrel(dt, input, camera) {
 
   if (state.grounded) {
     glideStreak = 0;
-    endurance.gain(endurance.regenGround * dt);
+
     if (hasMove) {
       const hit = findClimbableTree();
       if (hit) {
@@ -302,21 +303,20 @@ export function updateSquirrel(dt, input, camera) {
     let vr = state.vel.dot(upA);
 
     // Détection de grab (proximité d'un segment en vol)
-    state.nearGrab = false;
-    const grabHit = findClimbableTree();
+    const grabHit = findClimbableTree(1.5);
     if (grabHit && grabHit.dist < grabHit.seg.radius + 1.5) {
       state.nearGrab = true;
-      if (input.plantHeld) {
+      if (input.interactHeld || input.plantHeld) {
         enterClimb(grabHit);
         return;
       }
     }
 
     const wantGlide = input.glideHeld && vr < 0.5;
-    if (wantGlide && endurance.canGlide) {
+    if (wantGlide) {
       state.gliding = true;
       glideStreak += dt;
-      endurance.spend(endurance.drainGlide * dt);
+
       const vt = state.vel.clone().addScaledVector(upA, -vr);
       let dir;
       if (hasMove) dir = moveDir.clone();

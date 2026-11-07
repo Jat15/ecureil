@@ -29,9 +29,8 @@ export function initUI() {
   ui.scanBtn = document.getElementById('scan-btn');
   ui.spiritBtn = document.getElementById('spirit-btn');
   ui.touchUI = document.getElementById('touch-controls');
-  // Alias compat : ancien plantBtn → interactBtn
+  // P0.5 — plant-btn retiré (alias interact-btn conservé)
   ui.plantBtn = ui.interactBtn;
-  ui.plantBtn = document.getElementById('plant-btn');
 
   // Herbier
   for (const k of Object.keys(TREE_TYPES)) {
@@ -67,12 +66,7 @@ export function screenFlash(color = 'white', dur = 0.25) {
   });
 }
 
-export function showCombo(n) {
-  ui.comboEl.textContent = `x${n} !`;
-  ui.comboEl.classList.add('show', 'pulse');
-  setTimeout(() => ui.comboEl.classList.remove('pulse'), 200);
-}
-export function hideCombo() { ui.comboEl.classList.remove('show'); }
+// P0.5 — combo retiré
 
 export function fillHerbier(typeName) {
   if (ui.herbierCells[typeName]) ui.herbierCells[typeName].classList.add('filled');
@@ -112,26 +106,41 @@ export function updateHUD(snapshot) {
 
 
 // ============================================================
-// v6 — Endurance + Nids
+// P0.4d — Grab prompt (P0.5 : v6 Endurance/Nids retirés)
 // ============================================================
-export function updateEnduranceUI(current, max) {
-  const fill = document.getElementById('enduranceFill');
-  if (!fill) return;
-  const ratio = Math.max(0, Math.min(1, current / max));
-  fill.style.width = (ratio * 100) + '%';
-  if (ratio < 0.2) fill.style.background = 'linear-gradient(90deg, #ff4444, #ff8844)';
-  else if (ratio < 0.5) fill.style.background = 'linear-gradient(90deg, #ffcc44, #ffee44)';
-  else fill.style.background = 'linear-gradient(90deg, #3a7bd5, #6fffaa)';
-}
-
-export function updateNestCounter(visited, total) {
-  const el = document.getElementById('nestCounter');
-  if (el) el.textContent = `🥚 ${visited}/${total}`;
-}
-
 export function toggleGrabPrompt(show) {
-  const el = document.getElementById('grabPrompt');
+  // P0.4d — Fallback : créer l'élément si absent du HTML
+  let el = document.getElementById('grabPrompt');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'grabPrompt';
+    el.className = 'grab-prompt';
+    el.dataset.dynamic = '1';
+    el.textContent = 'S\'accrocher · E';
+    Object.assign(el.style, {
+      position: 'fixed',
+      left: '50%',
+      bottom: '22%',
+      transform: 'translateX(-50%)',
+      padding: '10px 20px',
+      background: 'rgba(10, 15, 25, 0.88)',
+      border: '1px solid rgba(220, 200, 130, 0.7)',
+      color: '#f5efe0',
+      borderRadius: '10px',
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      fontSize: '15px',
+      letterSpacing: '0.04em',
+      pointerEvents: 'none',
+      zIndex: '1000',
+      display: 'none',
+      boxShadow: '0 6px 20px rgba(0,0,0,0.55)',
+      transition: 'opacity 0.18s ease-out'
+    });
+    document.body.appendChild(el);
+  }
   if (!el) return;
-  if (show) el.classList.add('visible');
-  else el.classList.remove('visible');
+  el.classList.toggle('visible', show);
+  if (el.dataset.dynamic === '1') {
+    el.style.display = show ? 'block' : 'none';
+  }
 }

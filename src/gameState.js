@@ -7,7 +7,7 @@ import { seeds, stumps, growingTrees, updateSeeds, updateStumps,
 import { setupSeeds, setupStumps } from './collectables.js';
 import { updateInputFrame, input, isTouchDevice, camPitch, camDist,
   consumeYawPitch, getCamPitch, setCamPitch, getCamDist } from './input.js';
-import { ui, showToast, tickToast, screenFlash, showCombo, hideCombo,
+import { ui, showToast, tickToast, screenFlash,
   fillHerbier, showPlantPrompt, hidePlantPrompt, updatePlanetBar, updateHUD, initUI } from './ui.js';
 import { updateBirds, spawnBird } from './effects.js';
 import { saveGame, buildSaveData } from './save.js';
@@ -15,7 +15,7 @@ import { saveGame, buildSaveData } from './save.js';
 export function wireCollectableHooks(scene, particles) {
   setCollectableHooks({
     scene, particles,
-    showToast, screenFlash, showCombo, hideCombo,
+    showToast, screenFlash,
     fillHerbier, showPlantPrompt, hidePlantPrompt,
     updatePlanetBar: () => updatePlanetBar(plantedCount, totalStumps),
     spawnBird: (c, n, k) => spawnBird(scene, c, n, k)

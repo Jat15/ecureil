@@ -140,7 +140,7 @@ canvas { display: block; }
   background: rgba(120,180,255,0.42); border: 2px solid rgba(180,220,255,0.85);
   transform: translate(-50%, -50%); box-shadow: 0 0 16px rgba(120,180,255,0.4);
 }
-#jump-btn, #plant-btn {
+#jump-btn {
   position: fixed; width: 82px; height: 82px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-size: 12px; font-weight: 700; letter-spacing: 0.14em;
@@ -152,43 +152,10 @@ canvas { display: block; }
   background: rgba(120,180,255,0.18); border: 2px solid rgba(120,180,255,0.55);
   color: #a8d4ff;
 }
-#plant-btn {
-  bottom: 128px; right: 32px;
-  background: rgba(111,255,170,0.15); border: 2px solid rgba(111,255,170,0.5);
-  color: #6fffaa;
-}
 #jump-btn.pressed { background: rgba(120,180,255,0.55); transform: scale(0.94); }
-#plant-btn.pressed { background: rgba(111,255,170,0.55); transform: scale(0.94); }
 
 
-/* v6 — Endurance + Nids + Grab */
-#enduranceWrap {
-  position: fixed; right: 18px; bottom: 210px; z-index: 10;
-  width: 140px; pointer-events: none;
-}
-#enduranceLabel {
-  color: #8fbde6; font-size: 10px; letter-spacing: .2em;
-  text-transform: uppercase; opacity: .75; margin-bottom: 4px;
-  text-shadow: 0 1px 3px #000;
-}
-#enduranceBar {
-  height: 10px; background: rgba(10,25,40,0.8); border-radius: 5px;
-  border: 1px solid rgba(120,180,255,0.25); overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-}
-#enduranceFill {
-  height: 100%; width: 100%;
-  background: linear-gradient(90deg, #3a7bd5, #6fffaa);
-  border-radius: 5px;
-  transition: width 0.1s linear, background 0.3s;
-}
-#nestCounter {
-  position: fixed; right: 18px; bottom: 100px; z-index: 10;
-  color: #ffcc44; font-size: 13px; letter-spacing: .15em;
-  text-transform: uppercase; opacity: 0.85;
-  text-shadow: 0 1px 4px #000;
-  pointer-events: none;
-}
+/* P0.4d — Grab prompt (P0.5 : Endurance/Nids retirés) */
 #grabPrompt {
   position: fixed; bottom: 180px; left: 50%; transform: translateX(-50%);
   background: rgba(20,40,60,0.92); color: #eaf6ff;
@@ -202,9 +169,6 @@ canvas { display: block; }
   display: inline-block; background: rgba(255,204,68,0.25); color: #ffcc44;
   padding: 2px 10px; border-radius: 6px; font-weight: 700; margin: 0 4px;
 }
-
-/* P0.1 fix — masquer endurance/nids/grab en attendant P0.5 */
-#enduranceWrap, #nestCounter, #grabPrompt { display: none !important; }
 
 
 /* ============================================================
@@ -326,4 +290,31 @@ body.touch-ui-active #touch-controls {
 }
 body.gamepad-active #touch-controls {
   display: none !important;
+}
+
+
+/* ============================================================
+   P1 — Scanner spectral (bordure DOM)
+   ============================================================ */
+#spectralOverlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 14;
+  opacity: 0;
+  transition: opacity 0.05s linear;
+  box-shadow:
+    inset 0 0 80px 8px rgba(30, 60, 140, 0.5),
+    inset 0 0 20px 2px rgba(255, 204, 68, 0.35);
+  background:
+    radial-gradient(ellipse at center,
+      transparent 55%,
+      rgba(10, 20, 48, 0.35) 90%,
+      rgba(10, 20, 48, 0.55) 100%);
+}
+body.scan-active {
+  cursor: crosshair;
+}
+body.scan-active #hud {
+  opacity: 1;
 }

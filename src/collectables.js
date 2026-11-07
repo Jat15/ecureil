@@ -13,13 +13,10 @@ export const growingTrees = [];
 export let seedCount = 0;
 export let plantedCount = 0;
 export let totalStumps = 0;
-export let comboCount = 0;
-export let comboTimer = 0;
 export const plantedTypes = new Set();
 
 export function setSeedCount(v) { seedCount = v; }
 export function setPlantedCount(v) { plantedCount = v; }
-export function setCombo(c, t) { comboCount = c; comboTimer = t; }
 
 // Hooks injectés par le HUD
 const hooks = {};
@@ -135,13 +132,6 @@ let nearStump = null;
 export function getNearStump() { return nearStump; }
 
 export function updateSeeds(dt, clockTime) {
-  if (comboTimer > 0) {
-    comboTimer -= dt;
-    if (comboTimer <= 0) {
-      if (comboCount >= 3 && hooks.hideCombo) hooks.hideCombo();
-      comboCount = 0;
-    }
-  }
   const glideStreak = state._glideStreak || 0;
   for (const s of seeds) {
     if (s.collected) continue;
@@ -164,20 +154,10 @@ export function updateSeeds(dt, clockTime) {
       s.collected = true;
       s.group.visible = false;
       seedCount++;
-      comboCount++;
-      comboTimer = 2.5;
       const seedPos = s.group.position.clone();
       audio.seed();
       if (hooks.particles) hooks.particles.emit(seedPos, 10, s.charged ? 0xff88ff : 0xffcc44, 3, 0.7);
       if (hooks.screenFlash) hooks.screenFlash(s.charged ? 'rgba(255,136,255,0.4)' : 'rgba(255,204,68,0.35)', 0.2);
-      if (comboCount >= 3) {
-        if (hooks.showCombo) hooks.showCombo(comboCount);
-        audio.combo(comboCount);
-        if ((comboCount === 5 || comboCount === 10) && hooks.particles && hooks.screenFlash) {
-          hooks.screenFlash('rgba(255,204,68,0.7)', 0.4);
-          hooks.particles.emit(seedPos, 30, 0xffcc44, 5, 1.0);
-        }
-      }
     }
   }
 }
@@ -207,9 +187,6 @@ export function updateStumps(dt, input) {
         st.stumpMesh.scale.setScalar(0.001);
         plantTreeAt(st);
         plantedCount++;
-        comboCount = 0;
-        comboTimer = 0;
-        if (hooks.hideCombo) hooks.hideCombo();
         if (hooks.updatePlanetBar) hooks.updatePlanetBar();
         if (plantedCount % 3 === 0 && hooks.showToast) {
           hooks.showToast(`🌳 Forêt : ${plantedCount}/${totalStumps} plantés !`, false);

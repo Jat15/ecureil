@@ -50,6 +50,36 @@ export function poissonSphere(n, k = 20) {
   return points;
 }
 
+// P0.5-hotfix2 — mergeGeometries robuste + diagnostic
+function _diagGeom(g, i) {
+  const attrs = Object.keys(g.attributes).map(k => {
+    const a = g.attributes[k];
+    return `${k}(${a.itemSize}${a.normalized ? 'n' : ''})`;
+  }).join(',');
+  return `[${i}] indexed=${g.index !== null} verts=${g.attributes.position?.count ?? '?'} attrs={${attrs}}`;
+}
+export function safeMerge(geoms, label = 'trees') {
+  if (!geoms || geoms.length === 0) return null;
+  // Normalisation non-indexée d'abord : IcosahedronGeometry n'est pas indexé,
+  // CylinderGeometry/PlaneGeometry le sont. Uniformise avant merge.
+  const flat = geoms.map(g => (g.index ? g.toNonIndexed() : g));
+  const merged = mergeGeometries(flat, false);
+  if (merged) return merged;
+
+  // Fallback diagnostic (ne devrait plus arriver)
+  console.warn(`[${label}] mergeGeometries échec persistant (n=${flat.length}), diagnostic :`);
+  for (let i = 0; i < Math.min(flat.length, 5); i++) {
+    const g = flat[i];
+    const attrs = Object.keys(g.attributes).map(k => {
+      const a = g.attributes[k];
+      return `${k}(${a.itemSize}${a.normalized ? 'n' : ''})`;
+    }).join(',');
+    console.warn(`  [${i}] indexed=${g.index !== null} verts=${g.attributes.position?.count ?? '?'} attrs={${attrs}}`);
+  }
+  if (flat.length > 5) console.warn(`  ... et ${flat.length - 5} autres`);
+  return null;
+}
+
 export function buildOneTree(basePos, nrm, t1, t2, params) {
   const mat4 = new THREE.Matrix4().makeBasis(t1, nrm, t2);
   mat4.setPosition(basePos);
@@ -143,7 +173,7 @@ export function buildOneTree(basePos, nrm, t1, t2, params) {
   }
   growBranch(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 1, 0),
              params.trunkH, params.trunkR, params.maxDepth, -1);
-  const geo = mergeGeometries(parts, false);
+  const geo = safeMerge(parts, 'tree-part');
   if (!geo) return null;
   const swayAttr = geo.attributes.aSway;
   if (swayAttr) {
@@ -190,7 +220,7 @@ export function buildInitialForest(scene) {
   }
 
   if (!allGeoms.length) return;
-  const merged = mergeGeometries(allGeoms, false);
+  const merged = safeMerge(allGeoms, 'forest');
   const mesh = new THREE.Mesh(merged, getTreeMaterial());
   mesh.frustumCulled = false;
   scene.add(mesh);
@@ -298,7 +328,7 @@ export function buildInitialForestV2(scene) {
   }
 
   if (!allGeoms.length) return;
-  const merged = mergeGeometries(allGeoms, false);
+  const merged = safeMerge(allGeoms, 'forest');
   const mesh = new THREE.Mesh(merged, getTreeMaterial());
   mesh.frustumCulled = false;
   scene.add(mesh);
