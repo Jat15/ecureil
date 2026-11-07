@@ -91,7 +91,13 @@ window.addEventListener('gamepaddisconnected', () => {
 });
 
 initInput(renderer, {
-  joyBase: ui.joyBase, joyKnob: ui.joyKnob, jumpBtn: ui.jumpBtn, plantBtn: ui.plantBtn
+  joyBase: ui.joyBase,
+  joyKnob: ui.joyKnob,
+  jumpBtn: ui.jumpBtn,
+  interactBtn: ui.interactBtn,
+  scanBtn: ui.scanBtn,
+  spiritBtn: ui.spiritBtn,
+  touchUI: ui.touchUI
 });
 wireCollectableHooks(scene, null); // particles set après
 particles = new ParticlePool(scene, 250);
@@ -175,7 +181,15 @@ overlay.addEventListener('click', () => {
   if (!isTouchDevice) renderer.domElement.requestPointerLock();
   import('./audio.js').then(m => m.audio.init());
 });
-renderer.domElement.addEventListener('click', () => {
+
+
+  // P0.3 fix — touchstart fallback pour dismiss instantané sur mobile
+  overlay.addEventListener('touchstart', (e) => {
+    if (overlay.style.pointerEvents === 'none') return;
+    if (overlay.classList.contains('hidden')) return;
+    e.preventDefault();
+    overlay.click();
+  }, { passive: false });renderer.domElement.addEventListener('click', () => {
   if (!isTouchDevice && document.pointerLockElement !== renderer.domElement) {
     renderer.domElement.requestPointerLock();
   }

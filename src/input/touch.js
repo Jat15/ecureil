@@ -48,9 +48,24 @@ export function createTouchHandler(elements, callbacks = {}) {
     else el.classList.remove('pressed');
   }
 
+
+  // Détecte si le jeu a démarré (overlay dismissé)
+  function isGameStarted() {
+    const overlay = document.getElementById('overlay');
+    if (!overlay) return true;
+    if (overlay.style.pointerEvents === 'none') return true;
+    if (overlay.style.display === 'none') return true;
+    if (overlay.classList && overlay.classList.contains('hidden')) return true;
+    const cs = getComputedStyle(overlay);
+    if (cs.display === 'none') return true;
+    if (parseFloat(cs.opacity) < 0.5) return true;
+    return false;
+  }
+
   // --- Touchstart ---
   function onStart(e) {
     if (!visible) return;
+    if (!isGameStarted()) return;
     e.preventDefault();
     for (const t of e.changedTouches) {
       // 1) Boutons (priorité)
@@ -112,6 +127,7 @@ export function createTouchHandler(elements, callbacks = {}) {
   // --- Touchmove ---
   function onMove(e) {
     if (!visible) return;
+    if (!isGameStarted()) return;
     e.preventDefault();
     for (const t of e.changedTouches) {
       if (t.identifier === state.joy.id) {

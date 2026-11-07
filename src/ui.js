@@ -25,6 +25,12 @@ export function initUI() {
   ui.joyBase = document.getElementById('joy-base');
   ui.joyKnob = document.getElementById('joy-knob');
   ui.jumpBtn = document.getElementById('jump-btn');
+  ui.interactBtn = document.getElementById('interact-btn');
+  ui.scanBtn = document.getElementById('scan-btn');
+  ui.spiritBtn = document.getElementById('spirit-btn');
+  ui.touchUI = document.getElementById('touch-controls');
+  // Alias compat : ancien plantBtn → interactBtn
+  ui.plantBtn = ui.interactBtn;
   ui.plantBtn = document.getElementById('plant-btn');
 
   // Herbier

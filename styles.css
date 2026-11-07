@@ -316,3 +316,14 @@ canvas { display: block; }
 body:not(.touch-ui-active) #touch-controls {
   display: none !important;
 }
+
+
+/* ============================================================
+   P0.3 fix — afficher la UI tactile quand active
+   ============================================================ */
+body.touch-ui-active #touch-controls {
+  display: block !important;
+}
+body.gamepad-active #touch-controls {
+  display: none !important;
+}
