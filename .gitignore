@@ -1,0 +1,25 @@
+# Dépendances
+node_modules/
+
+# Scripts utilitaires de dev (racine uniquement, pas src/)
+/*.cjs
+/snap.sh
+/diagnose-*.cjs
+/patch-*.cjs
+
+# Backups automatiques des patches
+.backups-p0-1/
+.backups-p0-2/
+.backups-p0-3/
+.backups-p0-4/
+*.backup
+*.truncated-backup
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Éditeurs
+.vscode/
+.idea/
+*.swp
