@@ -33,6 +33,10 @@ export function buildSaveData({ seed, planted, collectedSeeds, plantedTypes, pla
     collectedSeeds,   // [seedIdx, ...]
     plantedTypes: [...plantedTypes],
     playerPos: [playerPos.x, playerPos.y, playerPos.z],
-    playerUp: [playerUp.x, playerUp.y, playerUp.z]
+    playerUp: [playerUp.x, playerUp.y, playerUp.z],
+    spiritMode: 'squirrel',
+    controlledAnimalId: null,
+    asleepSquirrelPos: null,
+    asleepSquirrelUp: null
   };
 }

@@ -3,8 +3,8 @@
 export const endurance = {
   current: 100,
   max: 100,
-  drainGlide: 6,     // /s en plané
-  drainClimb: 3,     // /s en grimpant
+  drainGlide: 0,     // /s en plané
+  drainClimb: 0,     // /s en grimpant
   regenGround: 25,   // /s au sol
   regenNest: 60,     // /s dans un nid
   minGlide: 5,       // en dessous : plus de plané

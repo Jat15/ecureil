@@ -73,6 +73,23 @@ const flashEl = document.getElementById('flash');
 
 // Initialisation UI + input (avant tout car les hooks s'en servent)
 initUI();
+
+// P0.3 — touche UI visible si device tactile, caché sinon
+if (isTouchDevice) {
+  document.body.classList.add('touch-ui-active');
+} else {
+  document.body.classList.remove('touch-ui-active');
+}
+// Cacher les boutons tactiles si manette connectée
+window.addEventListener('gamepadconnected', () => {
+  document.body.classList.add('gamepad-active');
+  document.body.classList.remove('touch-ui-active');
+});
+window.addEventListener('gamepaddisconnected', () => {
+  document.body.classList.remove('gamepad-active');
+  if (isTouchDevice) document.body.classList.add('touch-ui-active');
+});
+
 initInput(renderer, {
   joyBase: ui.joyBase, joyKnob: ui.joyKnob, jumpBtn: ui.jumpBtn, plantBtn: ui.plantBtn
 });
@@ -214,6 +231,8 @@ function animate() {
 
   uTime.value += dt;
   updateInputFrame(dt);
+  // P0.2 savePressed (clean)
+  if (input.savePressed && ui.onManualSave) ui.onManualSave();
   // Sync glideStreak dans state pour useSeeds
   updateSquirrel(dt, input, camera);
   // Exposer glideStreak

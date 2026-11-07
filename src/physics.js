@@ -12,7 +12,14 @@ export const state = {
   up: new THREE.Vector3(0, 0, 1), forward: new THREE.Vector3(1, 0, 0),
   grounded: false, gliding: false, climbing: false,
   climbTree: null, climbSeg: -1, climbT: 0, climbAngle: 0,
-  nearGrab: false
+  nearGrab: false,
+  spirit: {
+    mode: 'squirrel',
+    controlledAnimalId: null,
+    asleepSquirrelPos: null,
+    asleepSquirrelUp: null,
+    sleepStartTime: 0
+  }
 };
 
 export let glideStreak = 0;
